@@ -15,7 +15,6 @@ public class RedisConfig {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
 
-        // Usar RedisSerializer.json() en lugar de GenericJackson2JsonRedisSerializer
         RedisSerializer<Object> serializer = RedisSerializer.json();
 
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()

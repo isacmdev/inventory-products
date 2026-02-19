@@ -18,6 +18,7 @@ import java.util.List;
 public class ProductServiceUseCase implements ProductInterfacePortIn {
 
     private final ProductInterfacePortOut productInterfacePortOut;
+    private final CacheManager cacheManager;
 
     @Override
     public Product addProduct(Product product) {
@@ -26,12 +27,8 @@ public class ProductServiceUseCase implements ProductInterfacePortIn {
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(cacheNames="productById", key="#id"),
-            @CacheEvict(cacheNames="productList", allEntries=true)
-    })
+    @CacheEvict(cacheNames = "productById", key = "#id")
     public Product updateProduct(Long id, Product product) {
-
         Product existing = productInterfacePortOut.findById(id);
 
         existing.setName(product.getName());
@@ -42,7 +39,6 @@ public class ProductServiceUseCase implements ProductInterfacePortIn {
     }
 
     @Override
-    @Cacheable(cacheNames = "productList")
     public List<Product> getAllProducts() {
         return productInterfacePortOut.findAll();
     }
@@ -62,19 +58,18 @@ public class ProductServiceUseCase implements ProductInterfacePortIn {
         return productInterfacePortOut.findBySku(sku);
     }
 
-    @Caching(evict = {
-            @CacheEvict(cacheNames="productById", key="#id"),
-            @CacheEvict(cacheNames="productList", allEntries=true),
-            @CacheEvict(cacheNames="productBySku", allEntries=true)
-    })
+
     @Override
+    @CacheEvict(cacheNames = "productById", key = "#id")
     public void deleteProduct(Long id) {
         if (id <= 0) {
             throw new IllegalArgumentException("El id del producto no puede ser negativo");
         }
         Product product = productInterfacePortOut.findById(id);
+        String sku = product.getSku();
 
-        productInterfacePortOut.deleteById(product.getId());
+        productInterfacePortOut.deleteById(id);
+        cacheManager.getCache("productBySku").evict(sku);
     }
 
     @Override
